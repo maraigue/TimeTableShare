@@ -1,0 +1,94 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8">
+<meta http-equiv="content-script-type" content="text/javascript">
+<title>TimeTableShare</title>
+<style type="text/css"><!--
+/* [For_debugging] */
+/*
+table#tt{ border: 1px solid #00FF00; }
+table#tt tr{ border: 1px solid #FF0000; }
+table#tt tr td{ border: 1px solid #0000FF; }
+*/
+/* /[For_debugging] */
+
+table#tt{
+	empty-cells: show;
+}
+table#tt tr td{
+	border-right-width: 1px;
+	border-right-color: gray;
+	border-right-style: solid;
+	font-family: monospace;
+	font-size: smaller;
+	padding: 2px;
+}
+table#tt tr.important td{
+	border-bottom-width: 1px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+}
+table#tt tr td.station{ font-weight:bold; }
+table#tt tr td.trinfo{
+	border-bottom-width: 1px;
+	border-bottom-color: gray;
+	border-bottom-style: solid;
+	text-align: center;
+	vertical-align: top;
+}
+table#tt tr td.selected{
+	color:white;
+	background:navy;
+}
+table#tt tr td.selectedsucc{
+	color:white;
+	background:teal;
+}
+table#tt tr td.notselected{
+	color:black;
+	background:none;
+}
+
+kbd{
+	font-face:monospace;
+	font-size:150%;
+	font-weight:bold;
+}
+p{
+	margin: 0px;
+	padding: 0px;
+}
+--></style>
+<script type="text/javascript" src="sample.js"></script>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="jquery.hotkeys.js"></script>
+<script type="text/javascript" src="ttshare.js"></script>
+</head>
+<body onload="on_load()">
+<p>
+[<span style="color:gray">呼出</span>]
+[<a href="javascript:save_to_server()">保存</a>]
+[<span style="color:gray">別名で保存</span>]
+[<span style="color:gray">アップロード</span>]
+[<span style="color:gray">ダウンロード</span>]
+</p>
+<table id="tt"></table>
+<!--
+<hr>
+<p>ショートカットキー</p>
+<ul>
+<li><kbd>b</kbd>：空欄にする</li>
+<li><kbd>p</kbd>：「列車通過」(↓)の表記を追加</li>
+<li><kbd>o</kbd>：「別線区経由」(||)の表記を追加</li>
+<li><kbd>a</kbd>：列車を追加</li>
+<li><kbd>x</kbd>：列車を切り取り</li>
+<li><kbd>c</kbd>：列車をコピー</li>
+<li><kbd>v</kbd>：列車を貼り付け</li>
+<li><kbd>shift+a</kbd>：駅を追加</li>
+<li><kbd>shift+x</kbd>：駅を切り取り</li>
+<li><kbd>shift+c</kbd>：駅をコピー</li>
+<li><kbd>shift+v</kbd>：駅を貼り付け</li>
+</ul>
+-->
+</body>
+</html>
