@@ -606,6 +606,7 @@ function on_keydown_enter(double_click){
 	}
 }
 
+// ---------- データが読み込まれた時の処理 ----------
 function data_loaded(){
 	var s, t;
 	
@@ -623,6 +624,7 @@ function data_loaded(){
 	}
 }
 
+// ---------- 選択されているカーソルを変更する処理 ----------
 function sel(itemid){
 	if($("#"+itemid).length === 0) return;
 	
@@ -644,6 +646,7 @@ function sel(itemid){
 	cursor = itemid;
 }
 
+// ---------- 表を再描画する処理 ----------
 function render(){
 	var buf = "";
 	var s, t;
