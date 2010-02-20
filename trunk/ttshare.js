@@ -347,8 +347,14 @@ function undo(){
 	
 	var todo = undo_history.pop();
 	switch(todo["action"]){
-	case "single":
+	case "set_time_to_cell":
 		set_time_to_cell_base(todo["pos"], todo["value"]);
+		break;
+	case "train_delete":
+		train_delete_base(todo["pos"]);
+		break;
+	case "train_insert":
+		train_insert_base(todo["pos"], todo["time"], todo["name"]);
 		break;
 	}
 }
@@ -367,16 +373,14 @@ function set_time_to_cell_base(pos, value){
 }
 
 function set_time_to_cell(pos, value){
-	undo_history.push(deep_copy({ "action": "single", "pos": pos, "value": data["t"][pos[1]][pos[0]] }));
+	undo_history.push(deep_copy({ "action": "set_time_to_cell", "pos": pos, "value": data["t"][pos[1]][pos[0]] }));
 	set_time_to_cell_base(pos, value);
 }
 
 // ---------- 列車の挿入 ----------
-function train_insert(pos, time, name){ // time, name: optional
-	if(pos == "" || pos < 0 || pos > trains) return;
-	
+function train_insert_base(pos, time, name){ // time, name: optional
 	if(time === undefined){
-		time = []
+		time = [];
 		for(var i = 0; i < stations; i++) time.push(null);
 	}
 	if(name === undefined) name = "";
@@ -388,6 +392,13 @@ function train_insert(pos, time, name){ // time, name: optional
 	render();
 }
 
+function train_insert(pos, time, name){ // time, name: optional
+	if(pos == "" || pos < 0 || pos > trains) return;
+	
+	undo_history.push(deep_copy({ "action": "train_delete", "pos": pos }));
+	train_insert_base(pos, time, name);
+}
+
 // ---------- 列車のコピー ----------
 function train_copy(pos){
 	if(pos == "" || pos < 0 || pos >= trains - 1) return;
@@ -395,15 +406,20 @@ function train_copy(pos){
 }
 
 // ---------- 列車の削除 ----------
-function train_delete(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
-	if(pos == "" || pos < 0 || pos >= trains - 1) return;
-	
+function train_delete_base(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
 	if(copy === true) train_copy(pos);
 	data["t"].splice(pos, 1);
 	data["i"].splice(pos, 1);
 	
 	trains--;
 	render();
+}
+
+function train_delete(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
+	if(pos == "" || pos < 0 || pos >= trains - 1) return;
+	
+	undo_history.push(deep_copy({ "action": "train_insert", "pos": pos, "time": data["t"][pos], "name": data["i"][pos] }));
+	train_delete_base(pos, copy);
 }
 
 // ---------- 駅の挿入 ----------
