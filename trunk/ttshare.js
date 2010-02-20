@@ -26,6 +26,7 @@ var under_inputing = null; // 時刻が入力途中か
                            //      true: 連続入力の最初
                            //      配列: 連続入力の途中(1つ前の時刻が格納される))
 var clipboard = { "type": null };
+var undo_history = [];
 
 // ----------------------------------------
 //   Utilities
@@ -40,6 +41,11 @@ function rmtag(str){
 		.replace(/"/, "&quot;") // "
 		.replace(/[\x00-\x20]/, "&nbsp;")
 	);
+}
+
+// ---------- ディープコピー ----------
+function deep_copy(obj){
+	return $.evalJSON($.toJSON(obj));
 }
 
 // ---------- 時刻表のデータを表示するフォーマットにする ----------
@@ -70,6 +76,10 @@ function parseID(idname){
 		return [RegExp.$1, RegExp.$2];
 	}
 	return null;
+}
+
+function position2cellname(pos){
+	return "s"+pos[0]+"t"+pos[1];
 }
 
 // ---------- 入力された時刻が有効かどうか調べる ----------
@@ -291,8 +301,6 @@ function put_number(num){
 					if(val[0] >= 24) val[0] -= 24;
 					this_hour_str = format_num(val[0]);
 					
-					$("#"+cursor).html(format_time(val));
-					
 					// ※そうでない場合、そのまま処理すればよい
 				}
 			}
@@ -319,14 +327,48 @@ function put_number(num){
 	}
 }
 
+// ---------- 特殊な値をセットし、カーソルを移動する ----------
+// null: 空欄 true: 通過 false: 別線区経由
+function set_special_value_and_move(cursor, value){
+	if(!is_time_cell(cursor) || MARKS[value] === undefined) return;
+	
+	var pos = parseID(cursor);
+	
+	set_time_to_cell(pos, value);
+	
+	move_cursor(1, 0, false);
+}
+
 // ========== ↓時刻表データを書き換える必要のある処理 ここから↓ ==========
+
+// ---------- アンドゥ ----------
+function undo(){
+	if(undo_history.length == 0) return;
+	
+	var todo = undo_history.pop();
+	switch(todo["action"]){
+	case "single":
+		set_time_to_cell_base(todo["pos"], todo["value"]);
+		break;
+	}
+}
 
 // ---------- 時刻セルposの値を、valueに置き換える ----------
 // 注意：posの値が適切かはチェックしません。
 //       is_time_cell(cursor)がtrueである状態で、
 //       pos = parseID(cursor)として呼び出す必要があります。
-function set_time_to_cell(pos, value){
+function set_time_to_cell_base(pos, value){
+	if(value === true || value === false || value === null){
+		$("#"+position2cellname(pos)).html(MARKS[value]);
+	}else{
+		$("#"+position2cellname(pos)).html(format_time(value));
+	}
 	data["t"][pos[1]][pos[0]] = value;
+}
+
+function set_time_to_cell(pos, value){
+	undo_history.push(deep_copy({ "action": "single", "pos": pos, "value": data["t"][pos[1]][pos[0]] }));
+	set_time_to_cell_base(pos, value);
 }
 
 // ---------- 列車の挿入 ----------
@@ -401,19 +443,6 @@ function station_delete(pos, copy){ // copy: optional (trueであった場合、
 	
 	stations--;
 	render();
-}
-
-// ---------- 特殊な値をセットし、カーソルを移動する ----------
-// null: 空欄 true: 通過 false: 別線区経由
-function set_special_value_and_move(cursor, value){
-	if(!is_time_cell(cursor) || MARKS[value] === undefined) return;
-	
-	$("#"+cursor).html(MARKS[value]);
-	var pos = parseID(cursor);
-	
-	set_time_to_cell(pos, value);
-	
-	move_cursor(1, 0, false);
 }
 
 // ========== ↑時刻表データを書き換える必要のある処理 ここまで↑ ==========
@@ -540,6 +569,9 @@ function add_keyevents(){
 	
 	// エンターキー
 	$(document).bind("keydown", "return", on_keydown_enter);
+	
+	// Ctrl+Z(アンドゥ)
+	$(document).bind("keydown", "Ctrl+z", function(){ undo(); });
 	
 	// Ctrl+X(列車を切り取り)
 	$(document).bind("keydown", "Ctrl+x", function(){
