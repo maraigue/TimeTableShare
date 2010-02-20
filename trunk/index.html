@@ -12,6 +12,7 @@ table#tt tr td{ border: 1px solid #0000FF; }
 */
 /* /[For_debugging] */
 
+/* 表関連のスタイル */
 table#tt{
 	empty-cells: show;
 }
@@ -49,6 +50,17 @@ table#tt tr td.notselected{
 	background:none;
 }
 
+/* ダイアログ関係のスタイル */
+#mainrange{
+	position: relative;
+}
+#dialog_time, #dialog_station, #dialog_train{
+	position: absolute;
+	left: 0px;
+	top: 0px;
+}
+
+/* 仮 */
 kbd{
 	font-face:monospace;
 	font-size:150%;
@@ -73,7 +85,24 @@ p{
 [<span style="color:gray">アップロード</span>]
 [<span style="color:gray">ダウンロード</span>]
 </p>
-<table id="tt"></table>
+<div id="mainrange">
+	<table id="tt"></table>
+	
+	<!-- 時刻を設定するダイアログ -->
+	<div id="dialog_time">
+		
+	</div>
+	
+	<!-- 駅を設定するダイアログ -->
+	<div id="dialog_station">
+		
+	</div>
+	
+	<!-- 列車を設定するダイアログ -->
+	<div id="dialog_train">
+		
+	</div>
+</div>
 <!--
 <hr>
 <p>ショートカットキー</p>
