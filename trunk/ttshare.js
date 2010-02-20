@@ -356,6 +356,12 @@ function undo(){
 	case "train_insert":
 		train_insert_base(todo["pos"], todo["time"], todo["name"]);
 		break;
+	case "station_delete":
+		station_delete_base(todo["pos"]);
+		break;
+	case "station_insert":
+		station_insert_base(todo["pos"], todo["time"], todo["name"]);
+		break;
 	}
 }
 
@@ -423,9 +429,7 @@ function train_delete(pos, copy){ // copy: optional (trueであった場合、�
 }
 
 // ---------- 駅の挿入 ----------
-function station_insert(pos, time, name){ // time, name: optional
-	if(pos == "" || pos < 0 || pos > stations) return;
-	
+function station_insert_base(pos, time, name){ // time, name: optional
 	if(time === undefined){
 		time = []
 		for(var i = 0; i < trains; i++) time.push(null);
@@ -439,6 +443,13 @@ function station_insert(pos, time, name){ // time, name: optional
 	render();
 }
 
+function station_insert(pos, time, name){ // time, name: optional
+	if(pos == "" || pos < 0 || pos > stations) return;
+	
+	undo_history.push(deep_copy({ "action": "station_delete", "pos": pos }));
+	station_insert_base(pos, time, name);
+}
+
 // ---------- 駅のコピー ----------
 function station_copy(pos){
 	if(pos == "" || pos < 0 || pos >= stations - 1) return;
@@ -450,7 +461,7 @@ function station_copy(pos){
 }
 
 // ---------- 駅の削除 ----------
-function station_delete(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
+function station_delete_base(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
 	if(pos == "" || pos < 0 || pos >= stations - 1) return;
 	
 	if(copy === true) station_copy(pos);
@@ -459,6 +470,16 @@ function station_delete(pos, copy){ // copy: optional (trueであった場合、
 	
 	stations--;
 	render();
+}
+
+function station_delete(pos, copy){ // copy: optional (trueであった場合、クリップボードへコピー)
+	if(pos == "" || pos < 0 || pos >= stations - 1) return;
+	
+	var time = [];
+	for(var i = 0; i < trains; i++) time.push(data["t"][i][pos]);
+	
+	undo_history.push(deep_copy({ "action": "station_insert", "pos": pos, "time": time, "name": data["s"][pos] }));
+	station_delete_base(pos, copy);
 }
 
 // ========== ↑時刻表データを書き換える必要のある処理 ここまで↑ ==========
