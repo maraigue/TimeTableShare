@@ -25,8 +25,7 @@ var under_inputing = null; // 時刻が入力途中か
                            //     (null: 連続入力中でない
                            //      true: 連続入力の最初
                            //      配列: 連続入力の途中(1つ前の時刻が格納される))
-var clipboard_train = null;
-var clipboard_station = null;
+var clipboard = { "type": null };
 
 // ----------------------------------------
 //   Utilities
@@ -277,7 +276,7 @@ function put_number(num){
 	if(under_inputing["input_num"].length === WIDTH){
 		var pos = parseID(cursor);
 		var val = valid_time(under_inputing["input_num"]);
-		if(val){
+		if(is_time_cell(cursor) && val){
 			if(under_inputing["successive"] !== null){
 				this_hour_str = under_inputing["input_num"].substr(0, 2);
 			}
@@ -297,8 +296,7 @@ function put_number(num){
 					// ※そうでない場合、そのまま処理すればよい
 				}
 			}
-			
-			data["t"][pos[1]][pos[0]] = val;
+			set_time_to_cell(pos, val);
 			
 			// カーソルを移動
 			move_cursor(1, 0, false);
@@ -321,6 +319,16 @@ function put_number(num){
 	}
 }
 
+// ========== ↓時刻表データを書き換える必要のある処理 ここから↓ ==========
+
+// ---------- 時刻セルposの値を、valueに置き換える ----------
+// 注意：posの値が適切かはチェックしません。
+//       is_time_cell(cursor)がtrueである状態で、
+//       pos = parseID(cursor)として呼び出す必要があります。
+function set_time_to_cell(pos, value){
+	data["t"][pos[1]][pos[0]] = value;
+}
+
 // ---------- 列車の挿入 ----------
 function train_insert(pos, time, name){ // time, name: optional
 	if(pos == "" || pos < 0 || pos > trains) return;
@@ -341,7 +349,7 @@ function train_insert(pos, time, name){ // time, name: optional
 // ---------- 列車のコピー ----------
 function train_copy(pos){
 	if(pos == "" || pos < 0 || pos >= trains - 1) return;
-	clipboard_train = { "t": data["t"][pos], "i": data["i"][pos] };
+	clipboard = { "type": "train", "t": data["t"][pos], "i": data["i"][pos] };
 }
 
 // ---------- 列車の削除 ----------
@@ -377,9 +385,9 @@ function station_insert(pos, time, name){ // time, name: optional
 function station_copy(pos){
 	if(pos == "" || pos < 0 || pos >= stations - 1) return;
 	
-	clipboard_station = { "t": [], "s": data["s"][pos] };
+	clipboard = { "type": "station", "t": [], "s": data["s"][pos] };
 	for(var i = 0; i < trains; i++){
-		clipboard_station["t"].push(data["t"][i][pos]);
+		clipboard["t"].push(data["t"][i][pos]);
 	}
 }
 
@@ -402,10 +410,13 @@ function set_special_value_and_move(cursor, value){
 	
 	$("#"+cursor).html(MARKS[value]);
 	var pos = parseID(cursor);
-	data["t"][pos[1]][pos[0]] = value;
+	
+	set_time_to_cell(pos, value);
 	
 	move_cursor(1, 0, false);
 }
+
+// ========== ↑時刻表データを書き換える必要のある処理 ここまで↑ ==========
 
 // ---------- サーバに保存するためのデータ形式を生成する ----------
 function server_format_time(time_data, index){
@@ -421,6 +432,7 @@ function server_format_time(time_data, index){
 	return "["+time_data[0]+","+time_data[1]+"]";
 }
 
+// ---------- サーバに保存できる形にデータを整理して返す ----------
 function server_format(timetable_data){
 	var stations_data = $.map(timetable_data["s"], function(v, i){ return rmtag(v); });
 	stations_data.pop();
@@ -537,7 +549,12 @@ function add_keyevents(){
 		train_copy((parseID(cursor))[1]) });
 	// Ctrl+V(列車を貼り付け)
 	$(document).bind("keydown", "Ctrl+v", function(){
-		train_insert((parseID(cursor))[1], clipboard_train["t"], clipboard_train["i"]) });
+		if(clipboard["type"] === "train"){
+			train_insert((parseID(cursor))[1], clipboard["t"], clipboard["i"]);
+		}else{
+			alert("クリップボードに保存されているデータは、列車ではありません。");
+		}
+	});
 	
 	// Ctrl+Shift+X(駅を切り取り)
 	$(document).bind("keydown", "Ctrl+Shift+x", function(){
@@ -547,7 +564,12 @@ function add_keyevents(){
 		station_copy((parseID(cursor))[0]); });
 	// Ctrl+Shift+V(駅を貼り付け)
 	$(document).bind("keydown", "Ctrl+Shift+v", function(){
-		station_insert((parseID(cursor))[0], clipboard_station["t"], clipboard_station["s"]) });
+		if(clipboard["type"] === "station"){
+			station_insert((parseID(cursor))[0], clipboard["t"], clipboard["s"]);
+		}else{
+			alert("クリップボードに保存されているデータは、駅ではありません。");
+		}
+	});
 }
 
 // 特殊な時刻の値（通過・別線区経由）を入力する処理
